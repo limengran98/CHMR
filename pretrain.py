@@ -11,11 +11,11 @@ from configures.arguments import (
 )
 from dataset.create_datasets import get_data
 from utils import init_weights
-from pretrain_model_V3 import pretrain_func
+
 from utils.training_utils import get_logger, get_cosine_schedule_with_warmup
 
-
-from models.pretrain_model_V3 import GNN
+from pretrain_model_V3 import pretrain_func
+from pretrain_model_V3 import GNN
 from torch.distributions import Normal, Independent
 
 def main(args, seed):
