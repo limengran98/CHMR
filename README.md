@@ -32,6 +32,16 @@ Create a folder named `raw_data` and extract the pretraining data into it.
   ```
 
 * Unzip the `pretrain.zip` file and place its contents inside the `raw_data/` directory.
+  
+---
+
+## 🛠 Requirements
+
+Make sure your environment has the required dependencies installed. Example:
+
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
@@ -56,13 +66,4 @@ python pretrain.py \
 * `--epoch`: Number of training epochs
 * `--batch-size`: Training batch size
 
----
-
-## 🛠 Requirements
-
-Make sure your environment has the required dependencies installed. Example:
-
-```bash
-pip install -r requirements.txt
-```
 
