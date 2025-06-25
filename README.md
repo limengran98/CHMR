@@ -18,7 +18,7 @@ Create a folder named `ckpt` and place the pretrained model file inside it.
   Code: cvnb
   ```
 
-* Place the downloaded file (e.g., `model_name.pt`) into the `ckpt/` directory.
+* Place the downloaded file (e.g., `pretrain2DIM.pt`) into the `ckpt/` directory.
 
 ### 2. `raw_data/` Directory
 
