@@ -11,11 +11,11 @@ from configures.arguments import (
 )
 from dataset.create_datasets import get_data
 from utils import init_weights
-
+from models.pretrain_model import pretrain_func
 from utils.training_utils import get_logger, get_cosine_schedule_with_warmup
 
-from pretrain_model_V3 import pretrain_func
-from pretrain_model_V3 import GNN
+
+from models.pretrain_model import GNN
 from torch.distributions import Normal, Independent
 
 def main(args, seed):
@@ -65,10 +65,6 @@ def main(args, seed):
  
 
     # scheduler = None
-    total_steps  = args.epochs * args.steps
-    args.warmup_steps = int(0.03 * total_steps)
-
-
     scheduler = get_cosine_schedule_with_warmup(optimizer, 0, args.epochs * args.steps)
     
     logging.warning(f"device: {args.device}, " f"n_gpu: {args.n_gpu}, ")
