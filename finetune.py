@@ -61,6 +61,7 @@ def main(args, seed):
         num_workers=args.num_workers,
     )
     model = FineTuneGNN(
+        args = args,
         gnn_type=args.model,
         num_tasks=dataset.num_tasks,
         num_layer=args.num_layer,
@@ -203,7 +204,7 @@ if __name__ == "__main__":
     df = pd.DataFrame()
     mae_names = ["HLM", "ER", "Solubility", "hPPB", "rPPB", "RLM"]
 
-    for i in range(5):
+    for i in range(1):
         model, dataset, metric, train, valid, test, epoch, count, best_params = main(args, i)
 
         best_param_path = os.path.join(
