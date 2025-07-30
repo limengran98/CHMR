@@ -10,6 +10,7 @@ from configures.arguments import (
     get_args,
 )
 from dataset.create_datasets import get_data
+from dataset.data_utils import align_and_fill_modalities, align_and_aug_modalities
 from utils import init_weights
 from models.pretrain_model import pretrain_func
 from utils.training_utils import get_logger, get_cosine_schedule_with_warmup
@@ -24,6 +25,8 @@ def main(args, seed):
     args.device = device
 
     dataset, context_graph = get_data(args, "./raw_data", transform="pyg")
+    aligned_data = align_and_fill_modalities("./raw_data/pretrain/raw", fill_method=args.fill_method)
+    aug_data = align_and_aug_modalities("./raw_data/pretrain/raw")
     context_graph = context_graph[0]
 
 
@@ -37,6 +40,7 @@ def main(args, seed):
         batch_size=args.batch_size,
         shuffle=True,
         num_workers=args.num_workers,
+        drop_last=True,
     )
 
     model = GNN(
@@ -48,13 +52,9 @@ def main(args, seed):
         graph_pooling=args.readout,
         norm_layer=args.norm_layer,
         depth=args.depth,
-        beta=args.beta,
-        gamma=args.gamma,
-        lambd=args.lambd,
         ec_ce_weight=args.ec_ce_weight,
     ).to(device)
-    model.load_pretrained_graph_encoder("/home/lmr/InfoAlign-main/ckpt/pretrain2DIM.pt")
-    model.freeze_graph_encoder()
+    model.load_pretrained_graph_encoder("./ckpt/pretrain2D.pt")
 
     init_weights(model, args.initw_name, init_gain=0.02)
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wdecay)
@@ -86,9 +86,14 @@ def main(args, seed):
 
     for epoch in range(0, args.epochs):
         loss, train_loaders = pretrain_func(
-            args, model, train_loaders, context_graph, optimizer, scheduler, epoch
+            args, model, train_loaders, aligned_data, aug_data, context_graph, optimizer, scheduler, epoch
         )
         loss_tots.append(loss)
+        if epoch > 0 and epoch % 50 == 0:
+            checkpoint_path = args.model_path.replace(".pt", f"_epoch{epoch}.pt")
+            torch.save(model.state_dict(), checkpoint_path)
+            logger.info(f"Checkpoint saved at {checkpoint_path}")
+
         if epoch == args.epochs - 1:
             torch.save(model.state_dict(), args.model_path)
             yaml_path = args.model_path.replace(".pt", ".yaml")
@@ -120,5 +125,6 @@ if __name__ == "__main__":
     logger = get_logger(__name__)
     args.logger = logger
     print(vars(args))
+
 
     main(args, 0)
