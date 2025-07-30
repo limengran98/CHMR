@@ -169,9 +169,9 @@ class PygPredictionMoleculeDataset(InMemoryDataset):
         # CLS token repr
         unimol_feat = torch.tensor(unimol_repr['cls_repr'])
 
-        mol_rf_path = os.path.join(self.raw_dir, 'rf_pred.npy')
-        rf_pred = np.load(mol_rf_path)
-        rf_pred = torch.tensor(rf_pred)
+        # mol_rf_path = os.path.join(self.raw_dir, 'rf_pred.npy')
+        # rf_pred = np.load(mol_rf_path)
+        # rf_pred = torch.tensor(rf_pred)
 
         pyg_graph_list = []
         for idx, row in data_df.iterrows():
@@ -200,7 +200,7 @@ class PygPredictionMoleculeDataset(InMemoryDataset):
                 pass
             g.mol_features = mol_data[idx].unsqueeze(0)
             g.unimol_features  = unimol_feat[idx].unsqueeze(0)
-            g.rf_pred  = rf_pred[idx].unsqueeze(0)
+            # g.rf_pred  = rf_pred[idx].unsqueeze(0)
 
             y = []
             for col in range(self.start_column, len(row)):
