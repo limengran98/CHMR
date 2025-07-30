@@ -39,7 +39,7 @@ def get_data(args, load_path, transform="pyg"):
             )
     
     if "mol" in data_name:
-        from ogb.graphproppred import PygGraphPropPredDataset
+        from dataset.dataset_pyg import PygGraphPropPredDataset
         
         dataset = PygGraphPropPredDataset("ogbg-" + data_name, load_path)
 
