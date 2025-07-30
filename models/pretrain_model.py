@@ -239,8 +239,8 @@ def pretrain_func(args, model, loaders, aligned_data, aug_data, ctx_graph, optim
         # --- Total Loss ---
         total_loss = (
             cpr_loss +
-            args.intra_weight * intra_loss +
-            args.inter_weight * inter_loss
+            args.lambda_1 * intra_loss +
+            args.lambda_2 * inter_loss
         )
 
         # === Backward and optimize ===

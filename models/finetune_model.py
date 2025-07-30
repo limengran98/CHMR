@@ -92,7 +92,7 @@ class FineTuneGNN(nn.Module):
         self.dropout = args.task_dropout
         self.hidden = args.hidden
 
-        self.task_decoder = MLP(1024+167+3*emb_dim, hidden_features= args.hidden * emb_dim, out_features=num_tasks, dropout = args.task_dropout)
+        self.task_decoder = MLP(1024+167+3*emb_dim, hidden_features= args.hidden * emb_dim, out_features=num_tasks, dropout = args.task_dropout, dataset = args.dataset)
         self.return_tree = False
 
 
@@ -144,21 +144,24 @@ class MLP(nn.Module):
         act_layer=nn.GELU,
         bias=True,
         dropout=0.8,
+        dataset=None,
     ):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
 
         self.fc1 = nn.Linear(in_features, hidden_features, bias=bias)
-        self.ln = nn.LayerNorm(hidden_features)  
-        self.bn = nn.BatchNorm1d(hidden_features)
+        if dataset in ['finetune-molhiv', 'finetune-molbace','finetune-molsider']:
+            self.norm= nn.BatchNorm1d(hidden_features)
+        else:
+            self.norm = nn.LayerNorm(hidden_features)  
         self.act = act_layer()
         self.drop1 = nn.Dropout(dropout)
         self.fc2 = nn.Linear(hidden_features, out_features, bias=bias)
 
     def forward(self, x):
         x = self.fc1(x)
-        x = self.ln(x)
+        x = self.norm(x)
         x = self.act(x)
         x = self.drop1(x)
         x = self.fc2(x)
