@@ -1,8 +1,8 @@
 from ogb.utils.features import atom_to_feature_vector, bond_to_feature_vector
-
+import os
 import torch
 import numpy as np
-
+from tqdm import tqdm
 import copy
 import pathlib
 import pandas as pd
@@ -11,6 +11,8 @@ from torch_geometric.data import Data
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
+
+from scipy.spatial import distance
 
 def smiles2graph(smiles_string):
     """
@@ -102,6 +104,7 @@ def read_graph_list(mol_df, cls_tensor, tensor_fp, keep_id=False):
 
         if graph["type"] is not None:
             g.type = graph["type"]
+            g.mol_node_id = graph["type"]
             del graph["type"]
         g['feature_3D'] = cls_tensor[i].unsqueeze(0) 
         g['feature_1D'] = tensor_fp[i].unsqueeze(0)
@@ -661,6 +664,73 @@ def create_nx_graph(folder, min_thres=0.6, min_sparsity=0.995, top_compound_gene
     G.graph["cell_bound"] = cell_bound
     G.graph["express_bound"] = express_bound
 
+
+    from sklearn.neighbors import NearestNeighbors
+
+    def build_knn_matrix(feature_dict, id_list):
+        X = np.stack([feature_dict[n] for n in id_list])
+        return NearestNeighbors(n_neighbors=1).fit(X), X
+
+    gene_ids = G.graph['gene_nodes']
+    cell_ids = G.graph['cell_nodes']
+    expr_ids = G.graph['expr_nodes']
+    gene_feats = {n: G.nodes[n]['gene_target'] for n in gene_ids}
+    cell_feats = {n: G.nodes[n]['cell_target'] for n in cell_ids}
+    expr_feats = {n: G.nodes[n]['express_target'] for n in expr_ids}
+
+    gene_index, gene_matrix = build_knn_matrix(gene_feats, gene_ids)
+    cell_index, cell_matrix = build_knn_matrix(cell_feats, cell_ids)
+    expr_index, expr_matrix = build_knn_matrix(expr_feats, expr_ids)
+
+    for mol_id in G.graph['mol_nodes']:
+        mol_feat = G.nodes[mol_id]['mol_target'].reshape(1, -1)
+
+        # 查找已有邻居
+        neighbors = list(G.neighbors(mol_id))
+        matched_gene = [n for n in neighbors if n in gene_ids]
+        matched_cell = [n for n in neighbors if n in cell_ids]
+        matched_expr = [n for n in neighbors if n in expr_ids]
+
+        # fallback KNN
+        if matched_gene:
+            gene_id = matched_gene[0]
+        else:
+            idx = gene_index.kneighbors(mol_feat, return_distance=False)[0][0]
+            gene_id = gene_ids[idx]
+
+        if matched_cell:
+            cell_id = matched_cell[0]
+        else:
+            idx = cell_index.kneighbors(mol_feat, return_distance=False)[0][0]
+            cell_id = cell_ids[idx]
+
+        if matched_expr:
+            expr_id = matched_expr[0]
+        else:
+            idx = expr_index.kneighbors(mol_feat, return_distance=False)[0][0]
+            expr_id = expr_ids[idx]
+
+        G.nodes[mol_id]['matched_gene'] = gene_id
+        G.nodes[mol_id]['matched_cell'] = cell_id
+        G.nodes[mol_id]['matched_expr'] = expr_id
+
+
+
+        # 提取非缺失特征并添加到图中（供 KNN fallback 用）
+        gene_nodes = [n for n, d in G.nodes(data=True) if not np.isnan(d["gene_target"]).all()]
+        cell_nodes = [n for n, d in G.nodes(data=True) if not np.isnan(d["cell_target"]).all()]
+        expr_nodes = [n for n, d in G.nodes(data=True) if not np.isnan(d["express_target"]).all()]
+
+        G.graph["gene_feat"] = torch.tensor([G.nodes[n]["gene_target"] for n in gene_nodes])
+        G.graph["cell_feat"] = torch.tensor([G.nodes[n]["cell_target"] for n in cell_nodes])
+        G.graph["expr_feat"] = torch.tensor([G.nodes[n]["express_target"] for n in expr_nodes])
+
+        G.graph["gene_nodes"] = gene_nodes
+        G.graph["cell_nodes"] = cell_nodes
+        G.graph["expr_nodes"] = expr_nodes
+
+    
+
     return G
 
 
@@ -823,3 +893,179 @@ def scaffold_split(train_df, train_ratio=0.6, valid_ratio=0.15, test_ratio=0.25)
             idx_count += 1
 
     return train_inds, valid_inds, test_inds
+
+
+from rdkit import DataStructs
+import numpy as np
+from scipy.sparse import csr_matrix
+from sklearn.preprocessing import normalize
+from tqdm import tqdm
+import os
+from dataset.data_augmentation import augment_modalities
+
+def align_and_fill_modalities(folder, fill_method='mean'):
+    """
+    Align modalities by mol_id and fill missing entries using the selected method.
+    Supports caching with .npz to avoid redundant computation.
+
+    fill_method: 'mean', 'zero', or 'nearest'
+    """
+    cache_path = os.path.join(folder, f"aligned_modalities_{fill_method}.npz")
+
+    if os.path.exists(cache_path):
+        data = np.load(cache_path, allow_pickle=True)
+        return {k: data[k] for k in data.files}
+
+    # ==== Step 1: Load molecule structures and compute fingerprints ====
+    mol_df = pd.read_csv(f"{folder}/structure.csv.gz").drop_duplicates(subset="mol_id")
+    mol_ids = mol_df["mol_id"].values
+    smiles_list = mol_df["smiles"].tolist()
+
+    print("Generating molecular fingerprints...")
+    mol_features = []
+    for smi in tqdm(smiles_list, desc="SMILES to fingerprint"):
+        mol = Chem.MolFromSmiles(smi)
+        fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=1024)
+        mol_features.append(fp)
+    mol_features = np.array(mol_features)
+    mol_id_to_idx = {m: i for i, m in enumerate(mol_ids)}
+
+    # ==== Step 2: Load modality data ====
+
+    # -- Cell modality --
+    tqdm.write("Loading CP-Bray data...")
+    cp_bray_df = pd.read_csv(f"{folder}/CP-Bray.csv.gz")
+    cp_bray_feat = np.load(f"{folder}/CP-Bray_feature.npz")["data"]
+
+    tqdm.write("Loading CP-JUMP data...")
+    cp_jump_df = pd.read_csv(f"{folder}/CP-JUMP.csv.gz")
+    cp_jump_feat = np.load(f"{folder}/CP-JUMP_feature.npz")["data"]
+
+    # -- Gene modality --
+    tqdm.write("Loading G-CRISPR data...")
+    crispr_df = pd.read_csv(f"{folder}/G-CRISPR.csv.gz")
+    crispr_feat = np.load(f"{folder}/G-CRISPR_feature.npz")["data"]
+
+    tqdm.write("Loading G-ORF data...")
+    orf_df = pd.read_csv(f"{folder}/G-ORF.csv.gz")
+    orf_feat = np.load(f"{folder}/G-ORF_feature.npz")["data"]
+
+    # -- Expression modality --
+    tqdm.write("Loading GE data...")
+    ge_df = pd.read_csv(f"{folder}/GE.csv.gz")
+    ge_feat = np.load(f"{folder}/GE_feature.npz")["data"]
+    express_ids = ge_df["mol_id"].values
+    express_feat = ge_feat
+    tqdm.write("GE expression features loaded.")
+
+    # ==== Step 3: Align and fill missing values for each modality ====
+    from scipy.spatial import cKDTree
+    from sklearn.impute import KNNImputer
+
+    def build_feature_table(mol_ids, mol_features, target_ids, features, fill_type, label):
+        from tqdm import tqdm
+
+        tqdm.write(f"Building feature table for {label} (fill='{fill_type}')...")
+        feat_dim = features.shape[1]
+        target_id_to_index = {k: i for i, k in enumerate(target_ids)}
+        output = np.full((len(mol_ids), feat_dim), np.nan)
+
+        # Fill available entries
+        matched = 0
+        for i, mid in enumerate(mol_ids):
+            if mid in target_id_to_index:
+                output[i] = features[target_id_to_index[mid]]
+                matched += 1
+        tqdm.write(f"{label}: Matched {matched}/{len(mol_ids)}")
+
+        # Fill missing entries
+        missing_indices = np.where(np.isnan(output).any(axis=1))[0]
+
+        if fill_type == "zero":
+            output[missing_indices] = 0
+
+        elif fill_type == "mean":
+            mean_val = np.nanmean(features, axis=0)
+            output[missing_indices] = mean_val
+
+        elif fill_type == "nearest":
+            tqdm.write(f"{label}: Filling {len(missing_indices)} missing using KDTree...")
+            mol_features_array = np.array(mol_features, dtype=np.float32)
+            kdtree = cKDTree(mol_features_array)
+            missing_features = mol_features_array[missing_indices]
+            dists, indices = kdtree.query(missing_features, k=10)
+
+            for idx, neighbors in tqdm(
+                zip(missing_indices, indices),
+                desc=f"Filling missing {label}",
+                total=len(missing_indices)
+            ):
+                for j in neighbors[1:]:
+                    nearest_id = mol_ids[j]
+                    if nearest_id in target_id_to_index:
+                        output[idx] = features[target_id_to_index[nearest_id]]
+                        break
+                else:
+                    output[idx] = 0
+        else:
+            raise ValueError(f"Unknown fill_type: {fill_type}")
+
+        return output
+
+    # -- Align & fill for all modalities --
+    aligned_cp_bray_feat = build_feature_table(
+        mol_ids, mol_features, cp_bray_df["mol_id"].values, cp_bray_feat, fill_method, "CP-Bray"
+    )
+    aligned_cp_jump_feat = build_feature_table(
+        mol_ids, mol_features, cp_jump_df["mol_id"].values, cp_jump_feat, fill_method, "CP-JUMP"
+    )
+    aligned_crispr_feat = build_feature_table(
+        mol_ids, mol_features, crispr_df["mol_id"].values, crispr_feat, fill_method, "G-CRISPR"
+    )
+    aligned_orf_feat = build_feature_table(
+        mol_ids, mol_features, orf_df["mol_id"].values, orf_feat, fill_method, "G-ORF"
+    )
+    aligned_express_feat = build_feature_table(
+        mol_ids, mol_features, express_ids, express_feat, fill_method, "Expression"
+    )
+
+    # ==== Step 4: Cache and return ====
+    print("Saving to cache:", cache_path)
+    np.savez_compressed(cache_path,
+        mol_id=mol_ids,
+        mol_feat=mol_features,
+        cp_bray_feat=aligned_cp_bray_feat,
+        cp_jump_feat=aligned_cp_jump_feat,
+        crispr_feat=aligned_crispr_feat,
+        orf_feat=aligned_orf_feat,
+        express_feat=aligned_express_feat
+    )
+
+    return {
+        "mol_id": mol_ids,
+        "mol_feat": mol_features,
+        "crispr_feat": aligned_crispr_feat,
+        "orf_feat": aligned_orf_feat,
+        "cp_bray_feat": aligned_cp_bray_feat,
+        "cp_jump_feat": aligned_cp_jump_feat,
+        "express_feat": aligned_express_feat
+    }
+
+
+def align_and_aug_modalities(folder):
+    """
+    Aligns modalities by mol_id and fills missing data using specified strategy.
+    Results are cached in an .npz file to avoid recomputation.
+    
+    fill_method: 'mean', 'zero', 'nearest'
+    """
+    cache_path = os.path.join(folder, f"aligned_modalities_graph.npz")
+    
+    if os.path.exists(cache_path):
+        data = np.load(cache_path, allow_pickle=True)
+        return {k: data[k] for k in data.files}
+    else:
+        aug_data = augment_modalities(folder, fill_method='graph')
+        np.savez_compressed(cache_path, **aug_data)
+        return(aug_data)
+    

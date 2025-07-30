@@ -2,6 +2,7 @@ import os
 import torch
 import pickle
 import logging
+import numpy as np
 import pandas as pd
 import os.path as osp
 from torch_geometric.data import InMemoryDataset
@@ -44,10 +45,12 @@ class PretrainContextDataset(InMemoryDataset):
         nxg_name = f"{folder}/{self.nxg_name}.pickle"
         if not os.path.exists(nxg_name):
             G = create_nx_graph(folder, min_thres=threshold, top_compound_gene_express=0.01)
+
             with open(nxg_name, "wb") as f:
                 pickle.dump(G, f)
         else:
             G = pd.read_pickle(nxg_name)
+
         
         pyg_graph = from_networkx(G)
         torch.save(self.collate([pyg_graph]), self.processed_paths[0])

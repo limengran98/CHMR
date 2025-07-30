@@ -5,17 +5,14 @@ import pandas as pd
 import numpy as np
 import os.path as osp
 from torch_geometric.data import InMemoryDataset
-from sklearn.model_selection import train_test_split
 
 from .data_utils import read_graph_list
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
 import random
+
 def get_maccs_fingerprint(mol):
-    """
-    生成 MACCS Keys 指纹，返回长度 167 的 0/1 列表
-    """
     fp = AllChem.GetMACCSKeysFingerprint(mol)
     return [int(b) for b in fp.ToBitString()]
 
