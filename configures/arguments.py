@@ -1,6 +1,8 @@
 import yaml
 import argparse
 
+
+# === Model hyperparameter keys for selective saving/loading ===
 model_hyperparams = [
     "emb_dim",
     "model",
@@ -12,13 +14,12 @@ model_hyperparams = [
     "prior",
 ]
 
+
 def load_arguments_from_yaml(filename, model_only=False):
     with open(filename, "r") as file:
         config = yaml.safe_load(file)
     if model_only:
         config = {k: v for k, v in config.items() if k in model_hyperparams}
-    else:
-        config = yaml.safe_load(file)
     return config
 
 
@@ -33,125 +34,48 @@ def save_arguments_to_yaml(args, filename, model_only=False):
 
 
 def get_args():
-    parser = argparse.ArgumentParser(
-        description="Bayes‑OT‑Tree pre‑training"
-    )
-    parser.add_argument(
-        "--gpu-id", type=int, default=0, help="which gpu to use if any (default: 0)"
-    )
-    parser.add_argument(
-        "--num-workers", type=int, default=0, help="number of workers for data loader"
-    )
-    parser.add_argument(
-        "--no-print", action="store_true", default=False, help="don't use progress bar"
-    )
+    parser = argparse.ArgumentParser(description="Bayes‑OT‑Tree pre‑training")
 
-    parser.add_argument("--dataset", default="pretrain", type=str, help="dataset name")
+    parser.add_argument("--gpu-id", type=int, default=0, help="Which GPU to use (default: 0)")
+    parser.add_argument("--num-workers", type=int, default=0, help="Number of data loader workers")
+    parser.add_argument("--no-print", action="store_true", default=False, help="Disable progress bar")
 
-    # model
-    parser.add_argument(
-        "--model",
-        type=str,
-        default="gin-virtual",
-        help="GNN gin, gin-virtual, or gcn, or gcn-virtual (default: gin-virtual)",
-    )
-    parser.add_argument(
-        "--readout", type=str, default="sum", help="graph readout (default: sum)"
-    )
-    parser.add_argument(
-        "--norm-layer",
-        type=str,
-        default="batch_norm",
-        help="GNN gin, gin-virtual, or gcn, or gcn-virtual (default: gin-virtual)",
-    )
-    parser.add_argument(
-        "--drop-ratio", type=float, default=0.5, help="dropout ratio (default: 0.5)"
-    )
-    parser.add_argument(
-        "--num-layer",
-        type=int,
-        default=5,
-        help="number of GNN message passing layers (default: 5)",
-    )
-    parser.add_argument(
-        "--emb-dim",
-        type=int,
-        default=300,
-        help="dimensionality of hidden units in GNNs (default: 300)",
-    )
-    # training
-    ## pretraining
-    parser.add_argument(
-        "--walk-length",
-        type=int,
-        default=4,
-        help="pretraining context length",
-    )
-    parser.add_argument(
-        "--threshold",
-        type=float,
-        default=0.8,
-        help="minimum similarity threshold for context graph",
-    )
+    parser.add_argument("--dataset", type=str, default="pretrain", help="Dataset name")
 
-    ## other
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=5120,
-        help="input batch size for training (default: 256)",
-    )
-    parser.add_argument(
-        "--lr",
-        "--learning-rate",
-        type=float,
-        default=1e-3,
-        help="Learning rate (default: 1e-3)",
-    )
-    parser.add_argument("--wdecay", default=1e-5, type=float, help="weight decay")
-    parser.add_argument(
-        "--epochs", type=int, default=300, help="number of epochs to train"
-    )
-    parser.add_argument(
-        "--initw-name",
-        type=str,
-        default="default",
-        help="method to initialize the model paramter",
-    )
-    parser.add_argument(
-        "--model-path",
-        type=str,
-        default="ckpt/pretrain.pt",
-        help="path to the pretrained model",
-    )
-    parser.add_argument(
-        "--patience", type=int, default=50, help="patience for early stop"
-    )
+    parser.add_argument("--model", type=str, default="gin-virtual",
+                        help="Model type: gin, gin-virtual, gcn, gcn-virtual")
+    parser.add_argument("--readout", type=str, default="sum", help="Graph readout function")
+    parser.add_argument("--norm-layer", type=str, default="batch_norm", help="Normalization layer type")
+    parser.add_argument("--drop-ratio", type=float, default=0.5, help="Dropout ratio")
+    parser.add_argument("--num-layer", type=int, default=5, help="Number of GNN layers")
+    parser.add_argument("--emb-dim", type=int, default=300, help="Hidden dimension in GNNs")
+
+    parser.add_argument("--walk-length", type=int, default=4, help="Context walk length")
+    parser.add_argument("--threshold", type=float, default=0.8, help="Similarity threshold for context graph")
+
+    parser.add_argument("--batch-size", type=int, default=5120, help="Batch size")
+    parser.add_argument("--lr", "--learning-rate", type=float, default=1e-3, help="Learning rate")
+    parser.add_argument("--wdecay", type=float, default=1e-5, help="Weight decay")
+    parser.add_argument("--epochs", type=int, default=300, help="Training epochs")
+    parser.add_argument("--patience", type=int, default=50, help="Early stopping patience")
+
+    parser.add_argument("--initw-name", type=str, default="default", help="Weight initialization method")
+    parser.add_argument("--model-path", type=str, default="ckpt/pretrain.pt", help="Path to save/load model")
+
+    parser.add_argument("--vis_plot", type=bool, default=True, help="Enable TSNE visualization")
+
+    parser.add_argument("--fill_method", type=str, default="mean", help="Fill method: mean, zero, nearest")
 
     parser.add_argument("--depth", type=int, default=6)
-    # prior
-    parser.add_argument(
-        "--prior",
-        type=float,
-        default=1e-2,
-        help="loss weight to prior",
-    )
-    parser.add_argument("--beta", type=float, default=1.0)
-    parser.add_argument("--gamma", type=float, default=1.0)
-    parser.add_argument("--lambd", type=float, default=1.0)
+    parser.add_argument("--intra_weight", type=float, default=0.1)
+    parser.add_argument("--inter_weight", type=float, default=0.01)
     parser.add_argument("--ec_ce_weight", type=float, default=1.0)
 
-
-
-    parser.add_argument("--clip_grad", type=float, default=2.0)
-    parser.add_argument("--use_amp", type=bool, default=True)
-    parser.add_argument("--focal_gamma", type=float, default=2.0)
-
-
-
     args = parser.parse_args()
+
     print("no print", args.no_print)
 
-    ## n_steps for solver
+    # Extra default parameter
     args.n_steps = 1
+
     return args
