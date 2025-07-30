@@ -34,7 +34,7 @@ def save_arguments_to_yaml(args, filename, model_only=False):
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description="Bayes‑OT‑Tree pre‑training")
+    parser = argparse.ArgumentParser(description="CHMR pre‑training")
 
     parser.add_argument("--gpu-id", type=int, default=0, help="Which GPU to use (default: 0)")
     parser.add_argument("--num-workers", type=int, default=0, help="Number of data loader workers")
@@ -66,10 +66,15 @@ def get_args():
 
     parser.add_argument("--fill_method", type=str, default="mean", help="Fill method: mean, zero, nearest")
 
-    parser.add_argument("--depth", type=int, default=6)
-    parser.add_argument("--intra_weight", type=float, default=0.1)
-    parser.add_argument("--inter_weight", type=float, default=0.01)
-    parser.add_argument("--ec_ce_weight", type=float, default=1.0)
+    parser.add_argument("--depth", type=int, default=6) # d
+    parser.add_argument("--lambda_1", type=float, default=0.1)
+    parser.add_argument("--lambda_2", type=float, default=0.01)
+    parser.add_argument("--ec_ce_weight", type=float, default=1.0) #\mu
+
+    parser.add_argument("--gamma", type=float, default=0.1)
+    parser.add_argument("--hidden", type=int, default=4)
+    parser.add_argument("--task_dropout", type=float, default=0.8)
+
 
     args = parser.parse_args()
 
