@@ -193,14 +193,21 @@ class PygGraphPropPredDataset(InMemoryDataset):
         unimol_repr = clf.get_repr(mol_df["smiles"].tolist(), return_atomic_reprs=True)
         unimol_feat = torch.tensor(unimol_repr['cls_repr'])
 
-        mol_rf_path = os.path.join(self.raw_dir, 'rf_pred.npy')
-        rf_pred = np.load(mol_rf_path)
-        rf_pred = torch.tensor(rf_pred)
+        # Only load rf_pred for specific datasets
+        use_rf_pred = self.name.split("-")[-1] in ["molbace", "molclintox", "molhiv", "molsider"]
+        if use_rf_pred:
+            mol_rf_path = os.path.join(self.raw_dir, 'rf_pred.npy')
+            if not os.path.exists(mol_rf_path):
+                raise FileNotFoundError(f"{mol_rf_path} not found for dataset {self.name}")
+            rf_pred = np.load(mol_rf_path)
+            rf_pred = torch.tensor(rf_pred)
 
         for i, data in enumerate(data_list):
             data.mol_features = mol_data[i].unsqueeze(0)
             data.unimol_features = unimol_feat[i].unsqueeze(0)
-            data.rf_pred = rf_pred[i].unsqueeze(0)
+            if use_rf_pred:
+                data.rf_pred = rf_pred[i].unsqueeze(0)
+
 
         if self.task_type == 'subtoken prediction':
             graph_label_notparsed = pd.read_csv(osp.join(self.raw_dir, 'graph-label.csv.gz'), compression='gzip', header = None).values
