@@ -8,6 +8,7 @@ from .conv import GNN_node, GNN_node_Virtualnode
 class FineTuneGNN(nn.Module):
     def __init__(
         self,
+        args = None,
         num_tasks=None,
         num_layer=5,
         emb_dim=300,
@@ -86,10 +87,14 @@ class FineTuneGNN(nn.Module):
             for dim in pro_dims
         ])
 
+        self.dataset = args.dataset
+        self.gamma = args.gamma
+        self.dropout = args.task_dropout
+        self.hidden = args.hidden
 
-
-        self.task_decoder = MLP(1024+167+3*emb_dim, hidden_features= 4 * emb_dim, out_features=num_tasks)
+        self.task_decoder = MLP(1024+167+3*emb_dim, hidden_features= args.hidden * emb_dim, out_features=num_tasks, dropout = args.task_dropout)
         self.return_tree = False
+
 
     
     def forward(self, batched_data):
@@ -101,9 +106,10 @@ class FineTuneGNN(nn.Module):
         projected_features_2D = self.modal_projectors[1](h_graph)
         projected_features_3D = self.modal_projectors[2](batched_data.unimol_features)
         
-
-        task_out = self.task_decoder(torch.cat([batched_data.mol_features.float(), projected_features_1D, projected_features_2D, projected_features_3D], dim=1))# + 0.01*batched_data.rf_pred.detach()
-
+        if self.dataset in ['finetune-molhiv', 'finetune-molbace', 'finetune-molclintox', 'finetune-molsider']:
+            task_out = self.gamma*self.task_decoder(torch.cat([batched_data.mol_features.float(), projected_features_1D, projected_features_2D, projected_features_3D], dim=1)) + batched_data.rf_pred.detach()
+        else:
+            task_out = self.task_decoder(torch.cat([batched_data.mol_features.float(), projected_features_1D, projected_features_2D, projected_features_3D], dim=1))
         if self.return_tree == True:
             return [batched_data.mol_features.float(),h_graph,batched_data.unimol_features,h_graph],[projected_features_1D, projected_features_2D, projected_features_3D]
         else:
@@ -137,7 +143,7 @@ class MLP(nn.Module):
         out_features=None,
         act_layer=nn.GELU,
         bias=True,
-        drop=0.8,
+        dropout=0.8,
     ):
         super().__init__()
         out_features = out_features or in_features
@@ -147,7 +153,7 @@ class MLP(nn.Module):
         self.ln = nn.LayerNorm(hidden_features)  
         self.bn = nn.BatchNorm1d(hidden_features)
         self.act = act_layer()
-        self.drop1 = nn.Dropout(drop)
+        self.drop1 = nn.Dropout(dropout)
         self.fc2 = nn.Linear(hidden_features, out_features, bias=bias)
 
     def forward(self, x):
