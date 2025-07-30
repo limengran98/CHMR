@@ -62,7 +62,7 @@ def get_args():
     parser.add_argument("--initw-name", type=str, default="default", help="Weight initialization method")
     parser.add_argument("--model-path", type=str, default="ckpt/pretrain.pt", help="Path to save/load model")
 
-    parser.add_argument("--vis_plot", type=bool, default=True, help="Enable TSNE visualization")
+    parser.add_argument("--vis_plot", type=bool, default=False, help="Enable TSNE visualization")
 
     parser.add_argument("--fill_method", type=str, default="mean", help="Fill method: mean, zero, nearest")
 
