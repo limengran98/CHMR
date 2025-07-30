@@ -1,5 +1,5 @@
 
-# Pretraining Script for MultiModalTreeVQ
+# Pretraining Script for CHMR
 
 This repository contains the code for pretraining a model using custom data and pretrained checkpoints.
 
