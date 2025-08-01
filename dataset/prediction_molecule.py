@@ -33,27 +33,27 @@ import numpy as np
 from unimol_tools import UniMolRepr
 def get_maccs_fingerprint(mol):
     """
-    生成 MACCS Keys 指纹，返回长度 167 的 0/1 列表
+    Generate MACCS Keys fingerprint, return a 0/1 list of length 167.
     """
     fp = AllChem.GetMACCSKeysFingerprint(mol)
     return [int(b) for b in fp.ToBitString()]
 
 def smiles_to_fingerprint(df, 
                          smiles_col="smiles",
-                         morgan_radius=1,   # Morgan指纹半径
-                         morgan_n_bits=1024, # Morgan指纹位数 
-                         rdk_max_path=5,    # RDK最大路径长度
-                         rdk_fp_size=1024,  # RDK指纹位数
-                         include_rdk=False,  # 是否包含RDK指纹
-                         include_maccs=True):  # 是否包含MACCS密钥
+                         morgan_radius=1,   # Morgan fingerprint radius
+                         morgan_n_bits=1024, # Number of bits in Morgan fingerprint
+                         rdk_max_path=5,    # Maximum path length for RDK
+                         rdk_fp_size=1024,  # Number of bits in RDK fingerprint
+                         include_rdk=False,  # Whether to include RDK fingerprint
+                         include_maccs=True):  # Whether to include MACCS keys
     
-    # 提取SMILES列表
+    # Extract the SMILES list
     smiles_list = df[smiles_col].tolist()
     
-    # 转换SMILES为分子对象
+    # Convert SMILES to molecule objects
     mols = [Chem.MolFromSmiles(smi) for smi in smiles_list]
     
-    # 生成Morgan指纹
+    # Generate Morgan fingerprints
     morgan_fps = []
     for mol in mols:
         fp = AllChem.GetMorganFingerprintAsBitVect(mol, morgan_radius, nBits=morgan_n_bits)
@@ -62,7 +62,7 @@ def smiles_to_fingerprint(df,
         morgan_fps.append(arr)
     morgan_fps = np.array(morgan_fps, dtype=np.int8)
     
-    # 生成RDK指纹（如果包含）
+    # Generate RDK fingerprints (if included)
     rdk_fps = []
     if include_rdk:
         for mol in mols:
@@ -72,22 +72,23 @@ def smiles_to_fingerprint(df,
             rdk_fps.append(arr)
         rdk_fps = np.array(rdk_fps, dtype=np.int8)
     
-    # 生成MACCS密钥（如果包含）
+    # Generate MACCS keys (if included)
     maccs_fps = []
     if include_maccs:
         maccs_fps = np.array([get_maccs_fingerprint(mol) for mol in mols],
                              dtype=np.int8)
     
-    # 合并特征
+    # Combine features
     combined = [morgan_fps]
     if include_rdk:
         combined.append(rdk_fps)
     if include_maccs:
         combined.append(maccs_fps)
     
-    # 转换为张量
+    # Convert to tensor
     combined = np.concatenate(combined, axis=1)
     return torch.tensor(combined)
+
 
 
 class PygPredictionMoleculeDataset(InMemoryDataset):
