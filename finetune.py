@@ -12,7 +12,6 @@ from dataset.create_datasets import get_data
 from utils import validate, save_prediction
 from utils.training_utils import get_logger, get_cosine_schedule_with_warmup
 from models.finetune_model import FineTuneGNN
-#from models.gnn_BBBP import FineTuneGNN
 from utils.finetune_train import finetune_func
 
 
