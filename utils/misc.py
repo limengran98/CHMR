@@ -156,7 +156,6 @@ def init_weights(net, init_type="normal", init_gain=0.02):
 
 class AverageMeter(object):
     """Computes and stores the average and current value
-    Imported from https://github.com/pytorch/examples/blob/master/imagenet/main.py#L247-L262
     """
 
     def __init__(self):
