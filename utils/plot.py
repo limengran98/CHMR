@@ -58,7 +58,6 @@ def plot_tsne_modility(
         5: "#F432bd", 
     }
 
-    # 画散点图
     plt.figure(figsize=(10, 8), dpi=100)
     for label, name in label_to_name.items():
         idx = labels == label
