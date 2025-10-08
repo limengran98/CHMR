@@ -44,10 +44,10 @@ class PretrainMoleculeDataset(InMemoryDataset):
     
     def get_idx_split(self):
         full_idx = list(range(self.total_data_len))
-        num_test = max(1, int(0.01 * self.total_data_len))  
-        test_idx = random.sample(full_idx, num_test)  
+
         train_idx = list(set(full_idx))  
         valid_idx = []  
+        test_idx = [] 
 
         return {
             'train': torch.tensor(train_idx, dtype=torch.long),
