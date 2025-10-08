@@ -46,7 +46,7 @@ python pretrain.py \
   --model-path "ckpt/CHMR.pt" \
   --lr 1e-4 \
   --wdecay 1e-8 \
-  --epoch 300 \
+  --epoch 50 \
   --batch-size 3072 \
   --lambda_1 10 \
   --lambda_2 10
