@@ -4,7 +4,7 @@
 This repository contains the implementation for **CHMR**, a structure-aware molecular representation model.
 
 <div align="center">
-  <img src="figures/fig1.jpg" alt="Motivation of CHMR" width="80%">
+  <img src="figures/motivation.jpg" alt="Motivation of CHMR" width="80%">
   <p><em>Molecular perturbations trigger cellular or genetic changes, but modality incompleteness is common. 
   Through augmentation, alignment, and hierarchical modeling, multi-modal representations are progressively organized and structured — forming the core motivation of this work.</em></p>
 </div>
