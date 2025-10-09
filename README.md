@@ -10,7 +10,6 @@ This repository contains the code for pretraining and fine-tuning **CHMR**, a st
 
 Create a folder named `raw_data` and extract the pretraining data into it.
 
-<!--
 Create a folder named `raw_data` and extract the pretraining data into it.
 
 **Download** the dataset from the following Baidu Netdisk link:
@@ -19,11 +18,9 @@ Link: https://pan.baidu.com/s/1vU0fVglugG0qe8QmduKt9g
 Code: 9deg
 
 Unzip the `pretrain.zip` file and place its contents inside the `raw_data/` directory.
--->
 
-### 📂 Data Availability
 
-Due to anonymity requirements during the peer review process, the dataset download link will be made publicly available after the paper is accepted.
+
 
 ---
 
