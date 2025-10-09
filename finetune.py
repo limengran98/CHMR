@@ -203,7 +203,7 @@ if __name__ == "__main__":
     df = pd.DataFrame()
     mae_names = ["HLM", "ER", "Solubility", "hPPB", "rPPB", "RLM"]
 
-    for i in range(1):
+    for i in range(5):
         model, dataset, metric, train, valid, test, epoch, count, best_params = main(args, i)
 
         best_param_path = os.path.join(
@@ -295,5 +295,6 @@ if __name__ == "__main__":
         df_summary.to_csv(summary_all, mode="a", header=False, index=False)
     else:
         df_summary.to_csv(summary_all, index=False)
+
 
     print(df_summary)
