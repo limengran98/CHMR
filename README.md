@@ -17,12 +17,9 @@ This repository contains the implementation for **CHMR**, a structure-aware mole
 
 Create a folder named `raw_data` and extract the pretraining data into it.
 
-**Download** the dataset from the following Baidu Netdisk link:
+**Download the dataset** from [Zenodo](https://zenodo.org/records/17303120).
 
-Link: https://pan.baidu.com/s/1vU0fVglugG0qe8QmduKt9g  
-Code: 9deg
-
-Unzip the `pretrain.zip` file and place its contents inside the `raw_data/` directory.
+Unzip the `pretrain.zip` file and place all contents inside the `raw_data/` directory.
 
 
 
