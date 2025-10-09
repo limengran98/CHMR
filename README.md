@@ -17,8 +17,6 @@ This repository contains the implementation for **CHMR**, a structure-aware mole
 
 Create a folder named `raw_data` and extract the pretraining data into it.
 
-Create a folder named `raw_data` and extract the pretraining data into it.
-
 **Download** the dataset from the following Baidu Netdisk link:
 
 Link: https://pan.baidu.com/s/1vU0fVglugG0qe8QmduKt9g  
