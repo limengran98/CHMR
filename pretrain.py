@@ -5,10 +5,7 @@ import torch
 import torch.optim as optim
 from torch_geometric.loader import DataLoader
 
-from configures.arguments import (
-    save_arguments_to_yaml,
-    get_args,
-)
+from configures.arguments import get_args
 from dataset.create_datasets import get_data
 from dataset.data_utils import align_and_fill_modalities, align_and_aug_modalities
 from utils import init_weights
@@ -96,10 +93,8 @@ def main(args, seed):
 
         if epoch == args.epochs - 1:
             torch.save(model.state_dict(), args.model_path)
-            yaml_path = args.model_path.replace(".pt", ".yaml")
-            save_arguments_to_yaml(args, yaml_path, model_only=True)
             logger.info(
-                f"Finished Training \n Model saved at {args.model_path} and Arguments saved at {yaml_path} with loss {loss_tots}"
+                f"Finished Training \\n Model saved at {args.model_path} with loss {loss_tots}"
             )
 
     return (
@@ -128,3 +123,4 @@ if __name__ == "__main__":
 
 
     main(args, 0)
+
