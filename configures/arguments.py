@@ -15,23 +15,6 @@ model_hyperparams = [
 ]
 
 
-def load_arguments_from_yaml(filename, model_only=False):
-    with open(filename, "r") as file:
-        config = yaml.safe_load(file)
-    if model_only:
-        config = {k: v for k, v in config.items() if k in model_hyperparams}
-    return config
-
-
-def save_arguments_to_yaml(args, filename, model_only=False):
-    if model_only:
-        args = {k: v for k, v in vars(args).items() if k in model_hyperparams}
-    else:
-        args = vars(args)
-
-    with open(filename, "w") as f:
-        yaml.dump(args, f)
-
 
 def get_args():
     parser = argparse.ArgumentParser(description="CHMR pre‑training")
