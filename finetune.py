@@ -7,7 +7,7 @@ import torch.optim as optim
 from torch_geometric.loader import DataLoader
 from torch.nn.utils import parameters_to_vector, vector_to_parameters
 
-from configures.arguments import load_arguments_from_yaml, get_args
+from configures.arguments import get_args
 from dataset.create_datasets import get_data
 from utils import validate, save_prediction
 from utils.training_utils import get_logger, get_cosine_schedule_with_warmup
@@ -185,15 +185,6 @@ if __name__ == "__main__":
 
 
     args.output_dir = f"output/{args.dataset}/{pretrain_name}"
-    # yaml_path = args.model_path.replace(".pt", ".yaml")
-
-
-    # config = load_arguments_from_yaml(yaml_path, model_only=True)
-    # for arg, value in config.items():
-    #     setattr(args, arg, value)
-    # log_path = log_path + ".finetune"
-
-    # logger = get_logger(__name__, logfile=log_path)
     logger = get_logger(__name__)
     args.logger = logger
     print(vars(args))
@@ -298,3 +289,4 @@ if __name__ == "__main__":
 
 
     print(df_summary)
+
