@@ -30,7 +30,25 @@ Unzip the `pretrain.zip` file and place all contents inside the `raw_data/` dire
 
 Make sure to install all required dependencies:
 
+## 🛠 Requirements
+
+Make sure to install all required dependencies.  
+
 ```bash
+# 1️⃣ Upgrade pip
+pip install --upgrade pip
+
+# 2️⃣ Install PyTorch 2.0.1 (CUDA 11.8)
+pip install torch==2.0.1+cu118 torchvision==0.15.2+cu118 --index-url https://download.pytorch.org/whl/cu118
+
+# 3️⃣ Install PyTorch Geometric dependencies
+pip install torch-scatter==2.1.1 torch-sparse==0.6.17 torch-cluster==1.6.3 torch-spline-conv==1.2.2 \
+  -f https://data.pyg.org/whl/torch-2.0.1+cu118.html
+
+# 4️⃣ Install torch_geometric
+pip install torch_geometric==2.5.2
+
+# 5️⃣ Install remaining dependencies
 pip install -r requirements.txt
 ````
 
