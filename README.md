@@ -28,10 +28,6 @@ Unzip the `pretrain.zip` file and place all contents inside the `raw_data/` dire
 
 ## 🛠 Requirements
 
-Make sure to install all required dependencies:
-
-## 🛠 Requirements
-
 Make sure to install all required dependencies.  
 
 ```bash
