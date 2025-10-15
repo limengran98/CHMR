@@ -130,7 +130,6 @@ if __name__ == "__main__":
         f"-batch={args.batch_size}"
         f"-lambda1={args.lambda_1}"
         f"-lambda2={args.lambda_2}"
-        f"-decomp={args.decomp_method}"
     )
 
     # Append user note if provided
@@ -175,6 +174,7 @@ if __name__ == "__main__":
 
     # === Run main training ===
     main(args, 0)
+
 
 
 
