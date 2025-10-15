@@ -15,7 +15,7 @@ def get_args():
     parser.add_argument("--num-workers", type=int, default=0, help="Number of data loader workers")
     parser.add_argument("--no-print", action="store_true", default=False, help="Disable progress bar/log prints")
     parser.add_argument("--dataset", type=str, default="pretrain", help="Dataset name")
-    parser.add_argument("--model-path", type=str, default="ckpt/pretrain.pt", help="Path to save/load model checkpoint")
+    parser.add_argument("--model-path", type=str, default="pretrain.pt", help="Path to save/load model checkpoint")
 
     # Model / GNN
     parser.add_argument("--model", type=str, default="gin-virtual",
