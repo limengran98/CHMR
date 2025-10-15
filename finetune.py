@@ -20,12 +20,11 @@ import glob
 def resolve_model_path(args):
     """
     Simple and explicit checkpoint resolver.
-    User must provide the full model path (e.g., ckpt/CHMR-lr=1e-4-...-rpca-20251015-014139.pt).
     """
     import os
 
     if not getattr(args, "model_path", ""):
-        raise ValueError("❌ You must provide --model-path (e.g., ckpt/CHMR-xxx.pt)")
+        raise ValueError("❌ You must provide --model-path")
 
     # Auto-add ckpt/ prefix if missing
     if not args.model_path.startswith("ckpt" + os.sep):
@@ -322,6 +321,7 @@ if __name__ == "__main__":
 
 
     print(df_summary)
+
 
 
 
