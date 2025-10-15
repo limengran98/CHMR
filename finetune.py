@@ -19,62 +19,23 @@ import glob
 
 def resolve_model_path(args):
     """
-    Smart checkpoint resolver for fine-tuning.
-
-    Priority order:
-        1. --model-path: explicit full path or filename (auto-prepends ckpt/)
-        2. --note: short tag (e.g., CHMR-rpca)
-        3. --timestamp: unique timestamp (e.g., 20251015-014139)
-        4. fallback: latest checkpoint under ckpt/
+    Simple and explicit checkpoint resolver.
+    User must provide the full model path (e.g., ckpt/CHMR-lr=1e-4-...-rpca-20251015-014139.pt).
     """
-    import os, glob
+    import os
 
-    ckpt_dir = "ckpt"
-    os.makedirs(ckpt_dir, exist_ok=True)
+    if not getattr(args, "model_path", ""):
+        raise ValueError("❌ You must provide --model-path (e.g., ckpt/CHMR-xxx.pt)")
 
-    # === Case 1: explicit model path (with or without "ckpt/") ===
-    if getattr(args, "model_path", ""):
-        # Auto-prepend ckpt/ if only filename provided
-        if not args.model_path.startswith(ckpt_dir + os.sep):
-            candidate = os.path.join(ckpt_dir, args.model_path)
-        else:
-            candidate = args.model_path
+    # Auto-add ckpt/ prefix if missing
+    if not args.model_path.startswith("ckpt" + os.sep):
+        args.model_path = os.path.join("ckpt", args.model_path)
 
-        if os.path.exists(candidate):
-            print(f"✅ Using explicitly provided checkpoint: {candidate}")
-            return candidate
-        else:
-            print(f"⚠️ Provided path not found: {candidate}")
+    if not os.path.exists(args.model_path):
+        raise FileNotFoundError(f"❌ Checkpoint file not found: {args.model_path}")
 
-    # === Case 2: note/tag-based search ===
-    if getattr(args, "note", ""):
-        pattern = os.path.join(ckpt_dir, f"{args.note}*.pt")
-        matches = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
-        if matches:
-            print(f"✅ Found checkpoint by tag: {matches[0]}")
-            return matches[0]
-        else:
-            print(f"⚠️ No checkpoint matched tag '{args.note}' in {ckpt_dir}/")
-
-    # === Case 3: timestamp-based search ===
-    if getattr(args, "timestamp", ""):
-        pattern = os.path.join(ckpt_dir, f"*{args.timestamp}*.pt")
-        matches = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
-        if matches:
-            print(f"✅ Found checkpoint by timestamp: {matches[0]}")
-            return matches[0]
-        else:
-            print(f"⚠️ No checkpoint matched timestamp '{args.timestamp}' in {ckpt_dir}/")
-
-    # === Case 4: fallback to latest ckpt ===
-    matches = sorted(glob.glob(os.path.join(ckpt_dir, "*.pt")), key=os.path.getmtime, reverse=True)
-    if matches:
-        print(f"⚠️ No specific model specified. Using latest checkpoint: {matches[0]}")
-        return matches[0]
-    else:
-        raise FileNotFoundError("❌ No checkpoint files found in ckpt/ directory.")
-
-
+    print(f"✅ Using checkpoint: {args.model_path}")
+    return args.model_path
 
 def seed_torch(seed=0):
     print("Seed", seed)
@@ -361,6 +322,7 @@ if __name__ == "__main__":
 
 
     print(df_summary)
+
 
 
 
