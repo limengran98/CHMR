@@ -122,15 +122,18 @@ if __name__ == "__main__":
     # === Auto-generate model checkpoint name based on hyperparameters ===
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
+    # If you want to keep detailed model parameter information (e.g., learning rate, weight decay, epochs, etc.),
+    # please uncomment the following lines and make sure to provide the correct model path during fine-tuning.
     model_tag = (
         f"{args.model_path}"
-        f"-lr={args.lr}"
-        f"-wdecay={args.wdecay}"
-        f"-epoch={args.epochs}"
-        f"-batch={args.batch_size}"
-        f"-lambda1={args.lambda_1}"
-        f"-lambda2={args.lambda_2}"
+        # f"-lr={args.lr}"
+        # f"-wdecay={args.wdecay}"
+        # f"-epoch={args.epochs}"
+        # f"-batch={args.batch_size}"
+        # f"-lambda1={args.lambda_1}"
+        # f"-lambda2={args.lambda_2}"
     )
+
 
     # Append user note if provided
     if hasattr(args, "note") and args.note:
@@ -174,6 +177,7 @@ if __name__ == "__main__":
 
     # === Run main training ===
     main(args, 0)
+
 
 
 
