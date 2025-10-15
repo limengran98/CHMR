@@ -20,22 +20,33 @@ import glob
 def resolve_model_path(args):
     """
     Smart checkpoint resolver for fine-tuning.
-    
+
     Priority order:
-        1. --model-path: explicit full path
+        1. --model-path: explicit full path or filename (auto-prepends ckpt/)
         2. --note: short tag (e.g., CHMR-rpca)
         3. --timestamp: unique timestamp (e.g., 20251015-014139)
         4. fallback: latest checkpoint under ckpt/
     """
+    import os, glob
+
     ckpt_dir = "ckpt"
     os.makedirs(ckpt_dir, exist_ok=True)
 
-    # === Case 1: user gives full path ===
-    if getattr(args, "model_path", "") and os.path.exists(args.model_path):
-        print(f"✅ Using explicitly provided checkpoint: {args.model_path}")
-        return args.model_path
+    # === Case 1: explicit model path (with or without "ckpt/") ===
+    if getattr(args, "model_path", ""):
+        # Auto-prepend ckpt/ if only filename provided
+        if not args.model_path.startswith(ckpt_dir + os.sep):
+            candidate = os.path.join(ckpt_dir, args.model_path)
+        else:
+            candidate = args.model_path
 
-    # === Case 2: model_tag based search ===
+        if os.path.exists(candidate):
+            print(f"✅ Using explicitly provided checkpoint: {candidate}")
+            return candidate
+        else:
+            print(f"⚠️ Provided path not found: {candidate}")
+
+    # === Case 2: note/tag-based search ===
     if getattr(args, "note", ""):
         pattern = os.path.join(ckpt_dir, f"{args.note}*.pt")
         matches = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
@@ -55,13 +66,14 @@ def resolve_model_path(args):
         else:
             print(f"⚠️ No checkpoint matched timestamp '{args.timestamp}' in {ckpt_dir}/")
 
-    # === Case 4: fallback: latest ckpt ===
+    # === Case 4: fallback to latest ckpt ===
     matches = sorted(glob.glob(os.path.join(ckpt_dir, "*.pt")), key=os.path.getmtime, reverse=True)
     if matches:
-        print(f"⚠️ No specific tag/timestamp given. Using latest checkpoint: {matches[0]}")
+        print(f"⚠️ No specific model specified. Using latest checkpoint: {matches[0]}")
         return matches[0]
     else:
         raise FileNotFoundError("❌ No checkpoint files found in ckpt/ directory.")
+
 
 
 def seed_torch(seed=0):
@@ -349,5 +361,6 @@ if __name__ == "__main__":
 
 
     print(df_summary)
+
 
 
