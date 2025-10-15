@@ -132,15 +132,12 @@ if __name__ == "__main__":
         # f"-batch={args.batch_size}"
         # f"-lambda1={args.lambda_1}"
         # f"-lambda2={args.lambda_2}"
+        # f"-{timestamp}"
     )
-
 
     # Append user note if provided
     if hasattr(args, "note") and args.note:
         model_tag += f"-{args.note}"
-
-    # Append timestamp for uniqueness
-    model_tag += f"-{timestamp}"
 
     ckpt_dir = "ckpt"
     os.makedirs(ckpt_dir, exist_ok=True)
@@ -177,6 +174,7 @@ if __name__ == "__main__":
 
     # === Run main training ===
     main(args, 0)
+
 
 
 
