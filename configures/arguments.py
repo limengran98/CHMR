@@ -51,6 +51,13 @@ def get_args():
     parser.add_argument("--hidden", type=int, default=4)
     parser.add_argument("--task_dropout", type=float, default=0.8)
 
+    parser.add_argument(
+        "--note",
+        type=str,
+        default="",
+        help="Optional note to append to model name."
+    )
+
     args = parser.parse_args()
 
     # Extra default parameter preserved from your code
