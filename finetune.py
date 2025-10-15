@@ -243,11 +243,11 @@ if __name__ == "__main__":
     args.logger = logger
 
     # Log info
+    print(vars(args))
     print(f"✅ Using checkpoint: {args.model_path}")
     print(f"🧾 Log file: {args.log_path}")
     print(f"📁 Output dir: {args.output_dir}")
     print(f"📘 Pretrain name: {args.pretrain_name}")
-    print(vars(args))
 
 
 
@@ -349,4 +349,5 @@ if __name__ == "__main__":
 
 
     print(df_summary)
+
 
