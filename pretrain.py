@@ -86,21 +86,23 @@ def main(args, seed):
             args, model, train_loaders, aligned_data, aug_data, context_graph, optimizer, scheduler, epoch
         )
         loss_tots.append(loss)
-        # Periodic checkpointing
-        if (epoch + 1) % 50 == 0 or epoch == args.epochs - 1:
-            # Build checkpoint name dynamically
+        # === Periodic checkpointing ===
+        is_last_epoch = (epoch == args.epochs - 1)
+        is_checkpoint_epoch = ((epoch + 1) % 50 == 0)
+
+        if is_checkpoint_epoch and not is_last_epoch:
             ckpt_epoch_path = args.model_path.replace(".pt", f"_epoch{epoch+1}.pt")
             torch.save(model.state_dict(), ckpt_epoch_path)
             logger.info(f"💾 Checkpoint saved at {ckpt_epoch_path}")
 
-        # Final save (last epoch)
-        if epoch == args.epochs - 1:
+        # === Final save (only once at last epoch) ===
+        if is_last_epoch:
             torch.save(model.state_dict(), args.model_path)
             avg_loss = sum(loss_tots) / len(loss_tots)
             logger.info(f"✅ Finished training. Model saved at {args.model_path}. Final avg loss = {avg_loss:.4f}")
 
     return (
-        args.pretrain_name,
+        args.model_path,
         args.dataset,
         dataset.eval_metric,
         best_train,
@@ -173,3 +175,4 @@ if __name__ == "__main__":
 
     # === Run main training ===
     main(args, 0)
+
