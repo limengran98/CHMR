@@ -57,6 +57,7 @@ def get_args():
         default="",
         help="Optional note to append to model name."
     )
+    parser.add_argument("--timestamp", type=str, default="", help="Timestamp to locate unique checkpoint.")
 
     args = parser.parse_args()
 
