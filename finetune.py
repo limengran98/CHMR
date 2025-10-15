@@ -14,6 +14,55 @@ from utils.training_utils import get_logger, get_cosine_schedule_with_warmup
 from models.finetune_model import FineTuneGNN
 from utils.finetune_train import finetune_func
 
+import os
+import glob
+
+def resolve_model_path(args):
+    """
+    Smart checkpoint resolver for fine-tuning.
+    
+    Priority order:
+        1. --model-path: explicit full path
+        2. --note: short tag (e.g., CHMR-rpca)
+        3. --timestamp: unique timestamp (e.g., 20251015-014139)
+        4. fallback: latest checkpoint under ckpt/
+    """
+    ckpt_dir = "ckpt"
+    os.makedirs(ckpt_dir, exist_ok=True)
+
+    # === Case 1: user gives full path ===
+    if getattr(args, "model_path", "") and os.path.exists(args.model_path):
+        print(f"✅ Using explicitly provided checkpoint: {args.model_path}")
+        return args.model_path
+
+    # === Case 2: model_tag based search ===
+    if getattr(args, "note", ""):
+        pattern = os.path.join(ckpt_dir, f"{args.note}*.pt")
+        matches = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
+        if matches:
+            print(f"✅ Found checkpoint by tag: {matches[0]}")
+            return matches[0]
+        else:
+            print(f"⚠️ No checkpoint matched tag '{args.note}' in {ckpt_dir}/")
+
+    # === Case 3: timestamp-based search ===
+    if getattr(args, "timestamp", ""):
+        pattern = os.path.join(ckpt_dir, f"*{args.timestamp}*.pt")
+        matches = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
+        if matches:
+            print(f"✅ Found checkpoint by timestamp: {matches[0]}")
+            return matches[0]
+        else:
+            print(f"⚠️ No checkpoint matched timestamp '{args.timestamp}' in {ckpt_dir}/")
+
+    # === Case 4: fallback: latest ckpt ===
+    matches = sorted(glob.glob(os.path.join(ckpt_dir, "*.pt")), key=os.path.getmtime, reverse=True)
+    if matches:
+        print(f"⚠️ No specific tag/timestamp given. Using latest checkpoint: {matches[0]}")
+        return matches[0]
+    else:
+        raise FileNotFoundError("❌ No checkpoint files found in ckpt/ directory.")
+
 
 def seed_torch(seed=0):
     print("Seed", seed)
@@ -177,16 +226,27 @@ if __name__ == "__main__":
     import pandas as pd
 
     args = get_args()
-    log_path = args.model_path.replace(".pt", ".log")
+    # === Resolve model path automatically (support note / timestamp / full path) ===
+    args.model_path = resolve_model_path(args)
+    args.log_path = args.model_path.replace(".pt", ".log")
 
-    pretrain_name = args.model_path.split("/")[-1]
-    pretrain_name = pretrain_name.split(".")[0]
+    # Extract pretrain name safely across OS
+    pretrain_name = os.path.splitext(os.path.basename(args.model_path))[0]
     args.pretrain_name = pretrain_name
 
+    # Build output directory
+    args.output_dir = os.path.join("output", args.dataset, pretrain_name)
+    os.makedirs(args.output_dir, exist_ok=True)
 
-    args.output_dir = f"output/{args.dataset}/{pretrain_name}"
+    # Initialize logger
     logger = get_logger(__name__)
     args.logger = logger
+
+    # Log info
+    print(f"✅ Using checkpoint: {args.model_path}")
+    print(f"🧾 Log file: {args.log_path}")
+    print(f"📁 Output dir: {args.output_dir}")
+    print(f"📘 Pretrain name: {args.pretrain_name}")
     print(vars(args))
 
 
