@@ -143,7 +143,7 @@ You can also substitute `--dataset` with:
 
 ```bash
 python finetune.py \
-  --model-path HCMR.pt \
+  --model-path CHMR.pt \
   --dataset finetune-molbace \
   --lr 5e-4 \
   --gamma 0.005 \
