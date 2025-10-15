@@ -123,7 +123,7 @@ if __name__ == "__main__":
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
     model_tag = (
-        f"CHMR"
+        f"{args.model_path}"
         f"-lr={args.lr}"
         f"-wdecay={args.wdecay}"
         f"-epoch={args.epochs}"
@@ -175,4 +175,5 @@ if __name__ == "__main__":
 
     # === Run main training ===
     main(args, 0)
+
 
