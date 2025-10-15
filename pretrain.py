@@ -86,16 +86,18 @@ def main(args, seed):
             args, model, train_loaders, aligned_data, aug_data, context_graph, optimizer, scheduler, epoch
         )
         loss_tots.append(loss)
-        if epoch > 0 and epoch % 50 == 0:
-            checkpoint_path = args.model_path.replace(".pt", f"_epoch{epoch}.pt")
-            torch.save(model.state_dict(), checkpoint_path)
-            logger.info(f"Checkpoint saved at {checkpoint_path}")
+        # Periodic checkpointing
+        if (epoch + 1) % 50 == 0 or epoch == args.epochs - 1:
+            # Build checkpoint name dynamically
+            ckpt_epoch_path = args.model_path.replace(".pt", f"_epoch{epoch+1}.pt")
+            torch.save(model.state_dict(), ckpt_epoch_path)
+            logger.info(f"💾 Checkpoint saved at {ckpt_epoch_path}")
 
+        # Final save (last epoch)
         if epoch == args.epochs - 1:
             torch.save(model.state_dict(), args.model_path)
-            logger.info(
-                f"Finished Training \\n Model saved at {args.model_path} with loss {loss_tots}"
-            )
+            avg_loss = sum(loss_tots) / len(loss_tots)
+            logger.info(f"✅ Finished training. Model saved at {args.model_path}. Final avg loss = {avg_loss:.4f}")
 
     return (
         args.pretrain_name,
@@ -110,17 +112,60 @@ def main(args, seed):
 
 
 if __name__ == "__main__":
+    import os
+    import datetime
     args = get_args()
 
-    pretrain_name = args.model_path.split("/")[-1]
-    pretrain_name = pretrain_name.split(".")[0]
-    args.pretrain_name = pretrain_name
+    # === Auto-generate model checkpoint name based on hyperparameters ===
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    # logger = get_logger(__name__, logfile=log_path)
+    # Define key hyperparameters to embed in model tag
+    model_tag = (
+        f"CHMR"
+        f"-lr={args.lr}"
+        f"-wdecay={args.wdecay}"
+        f"-epoch={args.epochs}"
+        f"-batch={args.batch_size}"
+        f"-lambda1={args.lambda_1}"
+        f"-lambda2={args.lambda_2}"
+        f"-decomp={args.decomp_method}"
+    )
+
+    # Append user note if provided
+    if hasattr(args, "note") and args.note:
+        model_tag += f"-{args.note}"
+
+    # Append timestamp for uniqueness
+    model_tag += f"-{timestamp}"
+
+    # Build final model save path
+    ckpt_dir = "ckpt"
+    os.makedirs(ckpt_dir, exist_ok=True)
+    args.model_path = os.path.join(ckpt_dir, model_tag + ".pt")
+
+    # === Auto-resume (if previous checkpoint exists) ===
+    latest_ckpt = None
+    ckpt_files = sorted(
+        [f for f in os.listdir(ckpt_dir) if f.startswith("CHMR") and f.endswith(".pt")],
+        key=lambda x: os.path.getmtime(os.path.join(ckpt_dir, x)),
+        reverse=True,
+    )
+    if ckpt_files:
+        latest_ckpt = os.path.join(ckpt_dir, ckpt_files[0])
+        print(f"🔍 Detected previous checkpoint: {latest_ckpt}")
+        args.resume_ckpt = latest_ckpt
+    else:
+        args.resume_ckpt = None
+
+    # Initialize logger
     logger = get_logger(__name__)
     args.logger = logger
+
+    print(f"💾 Model will be saved to: {args.model_path}")
+    print(f"📘 Resume checkpoint: {args.resume_ckpt}")
     print(vars(args))
 
-
+    # Run main
     main(args, 0)
+
 
