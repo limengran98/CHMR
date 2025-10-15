@@ -56,7 +56,7 @@ To start the pretraining process, run:
 
 ```bash
 python pretrain.py \
-  --model-path "CHMR.pt" \
+  --model-path "CHMR" \
   --lr 1e-4 \
   --wdecay 1e-8 \
   --epoch 50 \
@@ -124,7 +124,7 @@ For **BACE, ClinTox, SIDER, and HIV**, we apply a **structure-aware ensemble str
 
 ```bash
 python finetune.py \
-  --model-path CHMR.pt \
+  --model-path CHMR \
   --dataset finetune-biogenadme \
   --lr 2e-3 \
   --hidden 4 \
@@ -143,7 +143,7 @@ You can also substitute `--dataset` with:
 
 ```bash
 python finetune.py \
-  --model-path CHMR.pt \
+  --model-path CHMR \
   --dataset finetune-molbace \
   --lr 5e-4 \
   --gamma 0.005 \
