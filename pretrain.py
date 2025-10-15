@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     # === Auto-detect previous checkpoint ===
     ckpt_files = sorted(
-        [f for f in os.listdir(ckpt_dir) if f.startswith(args.model_path) and f.endswith(".pt")],
+        [f for f in os.listdir(ckpt_dir) if f.startswith(args.model_path.split('.')[0]) and f.endswith(".pt")],
         key=lambda x: os.path.getmtime(os.path.join(ckpt_dir, x)),
         reverse=True,
     )
@@ -174,6 +174,7 @@ if __name__ == "__main__":
 
     # === Run main training ===
     main(args, 0)
+
 
 
 
