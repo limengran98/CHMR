@@ -19,17 +19,34 @@ import torch.nn.functional as F
 from .tree_model import MultiModalTreeVQ
 
 
-def context_propagation_recon_loss(pred, target, weight, nan_mask):
+def context_propagation_recon_loss(pred, target, weight, nan_mask, mode="auto"):
     """
-    CPR Loss: Graph-propagated neighborhood features as supervision for reconstruction.
+    Context Propagation Reconstruction (CPR) Loss.
+
+    This function adaptively selects the reconstruction loss based on the modality type:
+        - Molecular modality (binary data): Binary Cross Entropy with logits
+        - Continuous modalities (gene expression, morphology, etc.): Smooth L1 (Huber) loss or MSE
     """
     expanded_weight = weight.unsqueeze(2).expand_as(target)
-    loss = F.binary_cross_entropy_with_logits(
-        pred[~nan_mask],
-        target[~nan_mask],
-        weight=expanded_weight[~nan_mask],
-        reduction="none",
-    )
+    pred_valid = pred[~nan_mask]
+    target_valid = target[~nan_mask]
+    w = expanded_weight[~nan_mask]
+
+    if mode == "auto":
+        is_binary = (
+            target_valid.min().item() >= 0.0 and
+            target_valid.max().item() <= 1.0 and
+            target_valid.unique().numel() <= 10
+        )
+    else:
+        is_binary = (mode == "binary")
+
+    if is_binary:
+        loss = F.binary_cross_entropy_with_logits(pred_valid, target_valid, weight=w, reduction="none")
+    else:
+        loss = F.smooth_l1_loss(torch.sigmoid(pred_valid), target_valid, reduction="none")
+        loss = loss * w
+
     return loss.mean()
 
 def semantic_consistency_alignment_loss(
