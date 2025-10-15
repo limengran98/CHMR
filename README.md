@@ -124,7 +124,7 @@ For **BACE, ClinTox, SIDER, and HIV**, we apply a **structure-aware ensemble str
 
 ```bash
 python finetune.py \
-  --model-path ckpt/CHMR.pt \
+  --model-path CHMR.pt \
   --dataset finetune-biogenadme \
   --lr 2e-3 \
   --hidden 4 \
