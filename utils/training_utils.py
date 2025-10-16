@@ -9,28 +9,27 @@ import torch
 from torch.optim.lr_scheduler import LambdaLR
 
 
-def get_logger(name, logfile=None):
-    """create a nice logger"""
+def get_logger(name=None, console_level=logging.INFO, file_level=logging.DEBUG):
     logger = logging.getLogger(name)
-    # clear handlers if they were created in other runs
-    if logger.hasHandlers():
-        logger.handlers.clear()
     logger.setLevel(logging.DEBUG)
-    # create formatter
-    formatter = logging.Formatter("%(asctime)s - %(message)s")
-    # create console handler add add to logger
+    logger.handlers.clear()
+
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+    # console
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    ch.setLevel(console_level)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-    # create file handler add add to logger when name is not None
-    if logfile is not None:
-        fh = logging.FileHandler(logfile)
-        fh.setFormatter(formatter)
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
-    logger.propagate = False
+
+    # file
+    fh = logging.FileHandler(f"{name}.log", mode="a")
+    fh.setLevel(file_level)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
     return logger
+
 
 
 def seed_torch(seed=0):
@@ -60,4 +59,5 @@ def get_constant_schedule_with_warmup(optimizer, num_warmup_steps, last_epoch=-1
         if current_step < num_warmup_steps:
             return float(current_step) / float(max(1, num_warmup_steps))
         return 1.0 
+
     return LambdaLR(optimizer, _lr_lambda, last_epoch)
