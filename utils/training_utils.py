@@ -9,27 +9,28 @@ import torch
 from torch.optim.lr_scheduler import LambdaLR
 
 
-def get_logger(name=None, console_level=logging.INFO, file_level=logging.DEBUG):
+def get_logger(name, logfile=None):
+    """create a nice logger"""
     logger = logging.getLogger(name)
+    # clear handlers if they were created in other runs
+    if logger.hasHandlers():
+        logger.handlers.clear()
     logger.setLevel(logging.DEBUG)
-    logger.handlers.clear()
-
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-
-    # console
+    # create formatter
+    formatter = logging.Formatter("%(asctime)s - %(message)s")
+    # create console handler add add to logger
     ch = logging.StreamHandler()
-    ch.setLevel(console_level)
+    ch.setLevel(logging.DEBUG)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-
-    # file
-    fh = logging.FileHandler(f"{name}.log", mode="a")
-    fh.setLevel(file_level)
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
+    # create file handler add add to logger when name is not None
+    if logfile is not None:
+        fh = logging.FileHandler(logfile)
+        fh.setFormatter(formatter)
+        fh.setLevel(logging.DEBUG)
+        logger.addHandler(fh)
+    logger.propagate = False
     return logger
-
 
 
 def seed_torch(seed=0):
@@ -61,3 +62,4 @@ def get_constant_schedule_with_warmup(optimizer, num_warmup_steps, last_epoch=-1
         return 1.0 
 
     return LambdaLR(optimizer, _lr_lambda, last_epoch)
+
