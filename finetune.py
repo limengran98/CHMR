@@ -103,7 +103,7 @@ def main(args, seed):
     
     logging.warning(f"device: {args.device}, " f"n_gpu: {args.n_gpu}, ")
     logger.info(dict(args._get_kwargs()))
-    logger.info(model)
+    # logger.info(model)
     logger.info("***** Running training *****")
     logger.info(
         f"  Task = {args.dataset}@{args.num_trained}/{len(split_idx['valid'])}/{len(split_idx['test'])}"
@@ -321,6 +321,7 @@ if __name__ == "__main__":
 
 
     print(df_summary)
+
 
 
 
