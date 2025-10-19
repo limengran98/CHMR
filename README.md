@@ -56,7 +56,7 @@ To start the pretraining process, run:
 
 ```bash
 python pretrain.py \
-  --model-path "CHMR" \
+  --model-path CHMR \
   --lr 1e-4 \
   --wdecay 1e-8 \
   --epoch 50 \
