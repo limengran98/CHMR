@@ -10,6 +10,10 @@ This repository contains the implementation for **CHMR**, a structure-aware mole
 </div>
 
 ---
+## 📰 News
+- **[2025.11]** 🎉 Our paper **Learning Cell-Aware Hierarchical Multi-Modal Representations for Robust Molecular Modeling** has been **accepted as an Oral Presentation at AAAI 2026**!  🎤
+  [[arXiv]](https://arxiv.org/abs/2511.21120)
+---
 
 ## 📁 Directory Structure
 
@@ -159,4 +163,19 @@ You can also replace the dataset with:
 * `finetune-molhiv`
 
 ---
+
+## Citation
+
+If you find this work useful, please cite:
+
+Mengran Li, Zelin Zang, Wenbin Xing, Junzhou Chen, Ronghui Zhang, Jiebo Luo & Stan Z. Li. “Learning Cell-Aware Hierarchical Multi-Modal Representations for Robust Molecular Modeling”. arXiv:2511.21120, 2025.
+
+BibTeX:
+```bibtex
+@article{Li2025Learning,
+  title        = {Learning Cell-Aware Hierarchical Multi-Modal Representations for Robust Molecular Modeling},
+  author       = {Li, Mengran and Zang, Zelin and Xing, Wenbin and Chen, Junzhou and Zhang, Ronghui and Luo, Jiebo and Li, Stan Z.},
+  journal      = {arXiv preprint arXiv:2511.21120},
+  year         = {2025}
+}
 
