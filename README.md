@@ -25,7 +25,7 @@ Create a folder named `raw_data` and extract the pretraining data into it.
 
 Unzip the `pretrain.zip` file and place all contents inside the `raw_data/` directory.
 
-
+For more information about the raw dataset, please refer to the [InfoAlign project](https://github.com/liugangcode/InfoAlign).
 
 
 ---
